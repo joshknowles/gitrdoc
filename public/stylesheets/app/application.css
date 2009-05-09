@@ -1,0 +1,49 @@
+body {
+  color: #333333;
+}
+
+p {
+  font-size: 175%;
+}
+
+#header {
+  padding: 5px 20px;
+  background-color: #333333;
+}
+
+#logo {
+  float: left;
+  font-size: 125%;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+#logo a {
+  text-decoration: none;
+  color: #ffffff;
+}
+
+#title {
+  float: left;
+  padding-left: 10px;
+  font-size: 125%;
+  color: #cccccc;
+}
+
+#title a{
+  text-decoration: none;
+  color: #cccccc;
+}
+
+.container {
+  margin-top: 50px;
+}
+
+.box {
+  background-color: #F5F5F5;
+  border: 1px solid black;
+}
+
+.hidden {
+  display: none;
+}

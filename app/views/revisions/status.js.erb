@@ -1,0 +1,5 @@
+<%- if @revision.has_generated_rdoc? -%>
+  window.location = "<%= revision_path(@revision) %>";
+<%- else -%>
+  $("#content").html(<%= render("status").to_json %>);
+<%- end -%>

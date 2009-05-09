@@ -1,0 +1,23 @@
+body {
+  overflow: hidden;
+}
+#revision {
+  float: right;
+  margin-top: 4px;
+  font-size: 80%;
+  color: #dddddd;
+}
+
+#revision a {
+  font-weight: bold;
+  color: #dddddd;
+}
+
+.container {
+  width: 100%;
+  margin: 0;
+}
+
+iframe {
+  width: 100%;
+}

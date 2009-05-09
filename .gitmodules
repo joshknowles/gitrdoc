@@ -1,0 +1,24 @@
+[submodule "vendor/rails"]
+	path = vendor/rails
+	url = git://github.com/rails/rails.git
+[submodule "vendor/plugins/annotate_models"]
+	path = vendor/plugins/annotate_models
+	url = git://github.com/rotuka/annotate_models.git
+[submodule "vendor/plugins/cucumber"]
+	path = vendor/plugins/cucumber
+	url = git://github.com/aslakhellesoy/cucumber.git
+[submodule "vendor/plugins/rspec"]
+	path = vendor/plugins/rspec
+	url = git://github.com/dchelimsky/rspec.git
+[submodule "vendor/plugins/rspec-rails"]
+	path = vendor/plugins/rspec-rails
+	url = git://github.com/dchelimsky/rspec-rails.git
+[submodule "vendor/plugins/shoulda"]
+	path = vendor/plugins/shoulda
+	url = git://github.com/thoughtbot/shoulda.git
+[submodule "vendor/plugins/webrat"]
+	path = vendor/plugins/webrat
+	url = git://github.com/brynary/webrat.git
+[submodule "vendor/plugins/delayed_job"]
+	path = vendor/plugins/delayed_job
+	url = git://github.com/tobi/delayed_job.git

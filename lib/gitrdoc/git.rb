@@ -1,0 +1,1 @@
+require "gitrdoc/git/repository"

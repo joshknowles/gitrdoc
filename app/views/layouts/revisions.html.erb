@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="Josh Knowles" />
+    <title><%= @project %> :: gitrdoc</title>
+
+    <!--- Stylesheets -->
+    <%= stylesheet_link_tag "vendor/blueprint/screen.css" %>
+    <%= stylesheet_link_tag "vendor/blueprint/print.css", :media => "print" %>
+    <!--[if IE]>
+      <%= stylesheet_link_tag "vendor/blueprint/ie.css" %>
+    <![endif]-->
+
+    <%= stylesheet_link_tag "app/application.css" %>
+    <%= stylesheet_link_tag "app/revisions/show.css" %>
+
+    <!-- JavaScript Libraries -->
+    <%= javascript_include_tag "vendor/jquery-1.3.2.min.js" %>
+    <%= javascript_include_tag "app/application.js" %>
+    <%= javascript_include_tag "app/revisions/show.js" %>
+  </head>
+  <body>
+    <div id="header" class="clearfix">
+      <div id="logo"><%= link_to("gitrdoc:", root_path, :target => "_top") %></div>
+      <div id="title"><%= link_to(@project, @project.url, :target => "_top") %></div>
+      <div id="revision">
+        RDoc generated on <%= @revision.rdoc_generated_at.strftime("%m/%d/%Y at %I:%M %p %Z") %>
+        for <%= link_to @revision, @revision.url, :target => "_top" %>
+      </div>
+    </div>
+
+    <div id="content" class="container">
+      <%= yield %>
+    </div>
+
+    <%= google_tracking_code %>
+  </body>
+</html>

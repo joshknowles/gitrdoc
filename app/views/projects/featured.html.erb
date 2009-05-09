@@ -1,0 +1,7 @@
+<h2>Featured Projects</h2>
+
+<ul id="projects">
+  <% @projects.each do |project| %>
+    <li><%= link_to(project, project_path(project)) %></li>
+  <% end %>
+</ul>

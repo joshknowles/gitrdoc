@@ -1,0 +1,5 @@
+<%- if @project.has_cloned_repository? -%>
+  window.location = "<%= master_revision_path(@project) %>";
+<%- else -%>
+  $("#content").html(<%= render("status").to_json %>);
+<%- end -%>
