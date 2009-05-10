@@ -1,5 +1,5 @@
 # == Schema Info
-# Schema version: 20090509201408
+# Schema version: 20090510014855
 #
 # Table name: revisions
 #
@@ -33,6 +33,8 @@ class Revision < ActiveRecord::Base
 
   def generate_rdoc
     raise "RDoc has already been generated" if has_generated_rdoc?
+
+    GitRDoc::Git::Repository.reset(project.repository_path, sha)
 
     if GitRDoc::RDoc.generate(project.repository_path, rdoc_path, project.to_s, url)
       update_attribute(:rdoc_generated_at, Time.now)

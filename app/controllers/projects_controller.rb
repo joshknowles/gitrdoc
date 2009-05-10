@@ -5,7 +5,7 @@ class ProjectsController < ApplicationController
 # Actions
   def show
     if @project.has_cloned_repository?
-      redirect_to master_revision_path(@project)
+      redirect_to revision_path(@project, "master")
     elsif @project.save
       render "status", :layout => "status"
     end

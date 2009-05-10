@@ -4,8 +4,8 @@ class RevisionsController < ApplicationController
   before_filter :initialize_revision
 
 # Actions
-  def master
-    if @revision.has_generated_rdoc?
+  def show
+    if @revision.present? && @revision.has_generated_rdoc?
       render "show"
     else
       render "status", :layout => "status"
@@ -14,7 +14,7 @@ class RevisionsController < ApplicationController
 
   def status
     respond_to do |format|
-      format.html { render "status", :layout => status }
+      format.html { render "status", :layout => "status" }
       format.js
     end
   end
@@ -22,14 +22,12 @@ class RevisionsController < ApplicationController
 private
 
   def find_project
-    @project = Project.find_by_user_name_and_name(params[:user_name], params[:name])
+    @project = Project.find_by_user_name_and_name(params[:user_name], params[:project_name])
 
-    if @project.nil?
-      raise ActiveRecord::RecordNotFound
-    end
+    raise ActiveRecord::RecordNotFound if @project.nil?
   end
 
   def initialize_revision
-    @revision = @project.master_revision
+    @revision = @project.revision(params[:name])
   end
 end

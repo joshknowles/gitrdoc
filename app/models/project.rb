@@ -1,10 +1,9 @@
 # == Schema Info
-# Schema version: 20090509201408
+# Schema version: 20090510014855
 #
 # Table name: projects
 #
 #  id                       :integer         not null, primary key
-#  master_revision_id       :integer
 #  error_cloning_repository :boolean
 #  name                     :string(255)
 #  user_name                :string(255)
@@ -14,8 +13,8 @@
 
 class Project < ActiveRecord::Base
 # Associations
-  has_many    :revisions, :dependent => :destroy
-  belongs_to  :master_revision, :class_name => "Revision"
+  has_many  :references, :dependent => :destroy
+  has_many  :revisions, :dependent => :destroy
 
 # Validations
   validates_presence_of   :user_name
@@ -65,15 +64,18 @@ class Project < ActiveRecord::Base
     repository_cloned_at.present?
   end
 
-  def master_revision
+  def revision(reference_name)
     raise "repository hasn't been cloned" unless has_cloned_repository?
 
-    if master_revision_id.present?
-      revisions.find(master_revision_id)
-    else
-      returning revisions.find_or_create_by_sha(GitRDoc::Git::Repository.revision(repository_path)) do |master_revision|
-        update_attribute(:master_revision_id, master_revision.id)
+    if reference = references.find_by_name(reference_name)
+      revisions.find_or_create_by_sha(reference.sha)
+    elsif sha = GitRDoc::Git::Repository.revision(repository_path, reference_name)
+      reference = references.create! do |r|
+        r.name  = reference_name
+        r.sha   = sha
       end
+
+      revisions.find_or_create_by_sha(sha)
     end
   end
 
@@ -81,10 +83,20 @@ class Project < ActiveRecord::Base
     raise "repository hasn't been cloned" unless has_cloned_repository?
 
     if GitRDoc::Git::Repository.pull(repository_path)
-      revision = revisions.find_or_initialize_by_sha(GitRDoc::Git::Repository.revision(repository_path))
-      revision.generate_rdoc unless revision.has_generated_rdoc?
-      update_attribute(:master_revision_id, revision.id)
+      sha = GitRDoc::Git::Repository.revision(repository_path, "master")
+
+      if revisions.find_by_sha(sha).nil?
+        revision = revisions.build do |r|
+          r.sha = sha
+        end
+
+        revision.generate_rdoc
+      end
+
+      reference = references.find_or_initialize_by_name("master")
+      reference.update_attribute(:sha, sha)
     else
+      # do something here
     end
   end
 
@@ -102,7 +114,7 @@ class Project < ActiveRecord::Base
 private
 
   def queue_clone_repository
-    send_later(:clone_repository)
+    send_later(:clone_repository) unless has_cloned_repository?
   end
 
   def delete_cloned_repository

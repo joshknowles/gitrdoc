@@ -1,4 +1,6 @@
-<% if @revision.error_generating_rdoc? %>
+<% if @revision.nil? %>
+  Unknown reference
+<% elsif @revision.error_generating_rdoc? %>
   Error generating RDoc
 <% else %>
   Generating RDoc...

@@ -5,7 +5,6 @@ class CreateProjects < ActiveRecord::Migration
       t.string    :name
       t.boolean   :error_cloning_repository
       t.datetime  :repository_cloned_at
-      t.integer   :master_revision_id
       t.timestamps
     end
 

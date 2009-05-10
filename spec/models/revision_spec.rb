@@ -1,5 +1,5 @@
 # == Schema Info
-# Schema version: 20090509201408
+# Schema version: 20090510014855
 #
 # Table name: revisions
 #
@@ -71,11 +71,17 @@ describe Revision do
     describe "generate_rdoc" do
       before :each do
         GitRDoc::RDoc.stub!(:generate)
+        GitRDoc::Git::Repository.stub!(:reset)
       end
 
       it "should raise an error if the RDoc has already been generated" do
         @revision.rdoc_generated_at = Time.now
         lambda { @revision.generate_rdoc }.should raise_error
+      end
+      
+      it "should reset the repository to the SHA of given revision" do
+        GitRDoc::Git::Repository.should_receive(:reset).with(@revision.project.repository_path, @revision.sha)
+        @revision.generate_rdoc
       end
 
       it "should generate the rdoc for the repository_path into the rdoc_path" do

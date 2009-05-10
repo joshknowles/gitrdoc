@@ -1,5 +1,5 @@
-<%- if @revision.has_generated_rdoc? -%>
-  window.location = "<%= revision_path(@revision) %>";
+<%- if @revision.present? && @revision.has_generated_rdoc? -%>
+  window.location = "<%= revision_path(@project, params[:name]) %>";
 <%- else -%>
   $("#content").html(<%= render("status").to_json %>);
 <%- end -%>

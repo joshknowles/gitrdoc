@@ -1,10 +1,9 @@
 # == Schema Info
-# Schema version: 20090509201408
+# Schema version: 20090510014855
 #
 # Table name: projects
 #
 #  id                       :integer         not null, primary key
-#  master_revision_id       :integer
 #  error_cloning_repository :boolean
 #  name                     :string(255)
 #  user_name                :string(255)
@@ -16,6 +15,7 @@ require File.expand_path(File.dirname(__FILE__) + "/../spec_helper")
 
 describe Project do
   describe "Associations" do
+    it { should have_many(:references).dependent(:destroy) }
     it { should have_many(:revisions).dependent(:destroy) }
   end
 
@@ -144,14 +144,10 @@ describe Project do
       end
     end
 
-    describe "master_revision" do
-      before :each do
-        @revision = stub_model(Revision)
-      end
-
+    describe "revision" do
       it "should raise an error if the repository hasn't been cloned" do
         @project.repository_cloned_at = nil
-        lambda { @project.master_revision }.should raise_error
+        lambda { @project.revision("master") }.should raise_error
       end
 
       context "repository has been cloned" do
@@ -159,29 +155,53 @@ describe Project do
           @project.repository_cloned_at = Time.now
         end
 
-        context "revision hasn't been created" do
-          it "should find or create a Revision model representing the master revision of the repository and cache the id" do
-            GitRDoc::Git::Repository.should_receive(:revision).with(@project.repository_path).and_return(:sha)
-            @project.revisions.should_receive(:find_or_create_by_sha).with(:sha).and_return(@revision)
-            @project.should_receive(:update_attribute).with(:master_revision_id, @revision.id)
-            @project.master_revision.should == @revision
+        context "reference is unknown" do
+          before :each do
+            @project.references.stub!(:find_by_name => nil)
+          end
+
+          context "reference is invalid" do
+            it "should return nil" do
+              GitRDoc::Git::Repository.should_receive(:revision).with(@project.repository_path, "invalid").and_return(nil)
+              @project.revision("invalid").should be_nil
+            end
+          end
+
+          context "reference is valid" do
+            before :each do
+              GitRDoc::Git::Repository.should_receive(:revision).with(@project.repository_path, "master").and_return(:sha)
+              @reference = stub_model(Reference, :name => "master", :sha => :sha)
+              @project.references.stub!(:create! => @reference)
+              @project.revisions.stub!(:find_or_create_by_sha)
+            end
+
+            it "should create a Reference representing the given revision" do
+              @project.references.should_receive(:create!)
+              @project.revision("master")
+            end
+
+            it "should find or create a Revision model representing the reference's sha" do
+              @project.revisions.should_receive(:find_or_create_by_sha).with(@reference.sha)
+              @project.revision("master")
+            end
           end
         end
 
-        context "revision has been created" do
+        context "reference is known" do
           before :each do
-            @project.master_revision_id = @revision.id
+            @reference = stub_model(Reference, :name => "master", :sha => :sha)
+            @project.references.stub!(:find_by_name => @reference)
+            @project.revisions.stub!(:find_or_create_by_sha)
           end
 
           it "shouldn't re-request the sha from the git repo" do
             GitRDoc::Git::Repository.should_not_receive(:revision)
-            @project.revisions.stub!(:find)
-            @project.master_revision
+            @project.revision("master")
           end
 
-          it "should find the revision based on the master_revision_id" do
-            @project.revisions.should_receive(:find).with(@revision.id)
-            @project.master_revision.should == @revison
+          it "should find or create a Revision representing the Reference's sha" do
+            @project.revisions.should_receive(:find_or_create_by_sha).with(@reference.sha)
+            @project.revision("master")
           end
         end
       end
@@ -204,51 +224,64 @@ describe Project do
 
       context "pull is successful" do
         before :each do
-          GitRDoc::Git::Repository.stub!(:pull).and_return(true)
-          GitRDoc::Git::Repository.stub!(:revision)
+          GitRDoc::Git::Repository.stub!(:pull => true)
+          GitRDoc::Git::Repository.stub!(:revision => :sha)
 
-          @revision = stub_model(Revision, :project => @project)
-          @revision.stub!(:rdoc_path)
-          @revision.stub!(:url)
-          @revision.stub!(:update_attribute)
+          @reference = stub_model(Reference)
+          @reference.stub!(:update_attribute)
 
-          @project.revisions.stub!(:find_or_initialize_by_sha).and_return(@revision)
+          @project.references.stub!(:find_or_initialize_by_name => @reference)
 
-          GitRDoc::RDoc.stub!(:generate).and_return(true)
+          @revision = stub_model(Revision)
+          @revision.stub!(:generate_rdoc)
 
-          @project.stub!(:update_attribute)
+          @project.revisions.stub!(:find_by_sha => @revision)
+          @project.revisions.stub!(:build => @revision)
         end
 
-        it "should find_or_initialize a Revision based on the current SHA of the repository" do
-          GitRDoc::Git::Repository.should_receive(:revision).with(@project.repository_path).and_return(:sha)
-          @project.revisions.should_receive(:find_or_initialize_by_sha).with(:sha)
+        it "should get the current SHA of the master branch of the repository" do
+          GitRDoc::Git::Repository.should_receive(:revision).with(@project.repository_path, "master").and_return(:sha)
           @project.pull_repository_and_generate_rdoc
         end
 
-        it "should update the project's master_revision_id" do
-          @project.should_receive(:update_attribute).with(:master_revision_id, @revision.id)
+        it "should find or initialize a master Reference" do
+          @project.references.should_receive(:find_or_initialize_by_name).with("master")
           @project.pull_repository_and_generate_rdoc
         end
 
-        context "Revision hasn't already generated rdoc" do
-          it "should build the rdoc" do
-            @revision.stub!(:has_generated_rdoc? => false)
+        it "should update the sha of the Reference" do
+          @reference.should_receive(:update_attribute).with(:sha, :sha)
+          @project.pull_repository_and_generate_rdoc
+        end
 
-            current_time = Time.now
-            Time.stub!(:now).and_return(current_time)
+        context "reivsion already exists" do
+          before :each do
+            @revisions.stub!(:find_by_sha => @revision)
+          end
 
-            GitRDoc::RDoc.should_receive(:generate).and_return(true)
-            @revision.should_receive(:update_attribute).with(:rdoc_generated_at, current_time)
+          it "should not generate a new revision" do
+            @project.revisions.should_not_receive(:build)
+            @project.pull_repository_and_generate_rdoc
+          end
 
+          it "should not re-generate the rdoc" do
+            @revision.should_not_receive(:generate_rdoc)
             @project.pull_repository_and_generate_rdoc
           end
         end
 
-        context "Revision has already generated rdoc" do
-          it "should not re-generate the rdoc" do
-            @revision.stub!(:has_generated_rdoc? => true)
+        context "revision does not yet exist" do
+          before :each do
+            @project.revisions.stub!(:find_by_sha => nil)
+          end
 
-            GitRDoc::RDoc.should_not_receive(:generate)
+          it "should initialize a new Revision" do
+            @project.revisions.should_receive(:build)
+            @project.pull_repository_and_generate_rdoc
+          end
+
+          it "should generate the RDoc" do
+            @revision.should_receive(:generate_rdoc)
             @project.pull_repository_and_generate_rdoc
           end
         end

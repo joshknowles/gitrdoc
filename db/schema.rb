@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090509201408) do
+ActiveRecord::Schema.define(:version => 20090510014855) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -29,12 +29,21 @@ ActiveRecord::Schema.define(:version => 20090509201408) do
     t.string   "name"
     t.boolean  "error_cloning_repository"
     t.datetime "repository_cloned_at"
-    t.integer  "master_revision_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
   add_index "projects", ["user_name", "name"], :name => "index_projects_on_user_name_and_name"
+
+  create_table "references", :force => true do |t|
+    t.integer  "project_id"
+    t.string   "name"
+    t.string   "sha"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "references", ["project_id", "name"], :name => "index_references_on_project_id_and_name"
 
   create_table "revisions", :force => true do |t|
     t.integer  "project_id"
